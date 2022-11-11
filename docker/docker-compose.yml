@@ -9,7 +9,7 @@ services:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - ./postgres/init:/docker-entrypoint-initdb.d
+      - ./conf/postgres/init:/docker-entrypoint-initdb.d
       - lnpp_postgres_data:/var/lib/postgresql/data
     ports:
       # To connect to the DB use the HOST_DB_PORT var; 5432 refers to port inside container
