@@ -4,26 +4,27 @@ services:
 
   postgres:
     hostname: db
-    container_name: lnpp_db
+    container_name: ${APP_NAME}_db
     image: postgres:13-alpine
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - ./postgres/init:/docker-entrypoint-initdb.d
-      - lnpp_db_data:/var/lib/postgresql/data
+      - lnpp_app_data:/var/lib/postgresql/data
     ports:
       # To connect to the DB use the HOST_DB_PORT var; 5432 refers to port inside container
       - ${HOST_DB_PORT}:5432
 
   php:
     hostname: symfony
-    container_name: lnpp
+    container_name: ${APP_NAME}
+    image: zingstudios/lnpp-stack:1.0  
     build: 
       context: .
     links:
       - postgres:db
     volumes:
-      - ../:/var/www/html/zing
+      - ../:/var/www/html/app
     depends_on:
       - postgres
     ports:
@@ -37,10 +38,10 @@ services:
       - ${HOST_APP_PORT}:80
       - ${HOST_SECURE_APP_PORT}:443
     volumes:
-      - ../:/var/www/html/zing
+      - ../:/var/www/html/app
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - php
       - postgres
 volumes:
-  lnpp_db_data:
+  lnpp_app_data:

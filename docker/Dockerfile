@@ -31,11 +31,19 @@ RUN mv /root/.symfony5/bin/symfony /usr/local/bin/symfony
 # Non-root project user
 RUN useradd -m zing
 USER zing
-WORKDIR /var/www/html/zing
+WORKDIR /var/www/html/app
 
 # Ports used within container
-EXPOSE 80 # http
-EXPOSE 443 # https (untested)
-EXPOSE 5432 # postgres
-EXPOSE 9000 # php-fpm
-EXPOSE 9003 # xdebug
+# nginx - http
+EXPOSE 80 
+# nginx - https (untested)
+EXPOSE 443 
+
+# postgres
+EXPOSE 5432 
+
+# php-fpm
+EXPOSE 9000 
+
+# xdebug
+EXPOSE 9003 
