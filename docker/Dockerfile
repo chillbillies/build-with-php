@@ -20,8 +20,11 @@ RUN docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
 RUN mv /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini
 
 # Copy xdebug settings and PHP.ini overrides into container's shared ini directory
-COPY ./php-ini/xdebug.ini /usr/local/etc/php/conf.d/
-COPY ./php-ini/php-ini-overrides.ini /usr/local/etc/php/conf.d/
+COPY ./conf/php-ini/xdebug.ini /usr/local/etc/php/conf.d/
+COPY ./conf/php-ini/php-ini-overrides.ini /usr/local/etc/php/conf.d/
+
+# Add Mailhog Sendmail Binary
+COPY ./conf/bin/mhsendmail_linux_amd64 /usr/local/bin/mhsendmail
 
 # Composer and symfony binaries
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -36,14 +39,17 @@ WORKDIR /var/www/html/app
 # Ports used within container
 # nginx - http
 EXPOSE 80 
-# nginx - https (untested)
+# nginx - https (not configured with cert)
 EXPOSE 443 
-
 # postgres
 EXPOSE 5432 
-
 # php-fpm
 EXPOSE 9000 
-
 # xdebug
 EXPOSE 9003 
+# mailhog smtp
+EXPOSE 1025
+# mailhog web
+EXPOSE 8025
+# redis
+EXPOSE 6379
