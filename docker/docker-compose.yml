@@ -1,7 +1,8 @@
 version: '3'
 
+# PRPLM Dev Stack
+# Includes Php, Redis, Postgres and powered by Linux... also Mailhog
 services:
-
   database:
     hostname: postgres
     container_name: ${APP_NAME}_database
@@ -9,61 +10,46 @@ services:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - ./conf/postgres/init:/docker-entrypoint-initdb.d
-      - lnpp_postgres_data:/var/lib/postgresql/data
+      - ./.build/postgres:/docker-entrypoint-initdb.d
+      - prplm_postgres:/var/lib/postgresql/data
     ports:
-      # To connect to the DB use the HOST_DB_PORT var; 5432 refers to port inside container
       - ${HOST_DB_PORT}:5432
 
-  application:
+  php:
     hostname: php
     container_name: ${APP_NAME}
-    image: zingstudios/lnpp-stack:1.5  
-    build: 
-      context: .
+    build: .
+    restart: always
     links:
       - database:postgres
     volumes:
-      - ../:/var/www/html/app
+      - ../:/home/zing/dev
+      - prplm_logs:/home/zing/logs
     depends_on:
       - database
     ports:
-      - ${HOST_PHP_FPM_PORT}:9000
-
-  web_server:
-    container_name: ${APP_NAME}_web_server
-    image: nginx:stable-alpine
-    hostname: nginx
-    ports:
-      # if you want a seamless experience set this to 80, otherwise setting the port explicitly on host's browser will be necessary
+      # if you want a seamless experience set host ports to 80 and 443, otherwise
+      # setting the port explicitly on host's browser will be necessary
       - ${HOST_APP_PORT}:80
       - ${HOST_SECURE_APP_PORT}:443
-    volumes:
-      - ../:/var/www/html/app
-      - ./conf/nginx/default.conf:/etc/nginx/conf.d/default.conf
-    depends_on:
-      - application
-      - database
 
   email_server:
+    hostname: mailhog
     container_name: ${APP_NAME}_mail_server
     image: mailhog/mailhog:latest
-    hostname: mailhog
-    restart: always
     ports:
       - ${HOST_MAIL_SMTP_PORT}:1025
       - ${HOST_MAIL_WEB_PORT}:8025
 
   cache:
+    hostname: redis
     container_name: ${APP_NAME}_cache
     image: redis:7.0.5-alpine
-    hostname: redis
-    restart: always
     ports:
       - ${HOST_CACHE_PORT}:6379
     volumes:
-      - lnpp_redis_cache:/var/lib/redis/data
-
+      - prplm_redis:/var/lib/redis/data
 volumes:
-  lnpp_postgres_data:
-  lnpp_redis_cache:
+  prplm_postgres:
+  prplm_redis:
+  prplm_logs:

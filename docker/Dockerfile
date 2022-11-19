@@ -1,15 +1,23 @@
-FROM php:8.1.12-fpm-bullseye
+# FrankenPHP app server on PHP 8.2+: https://frankenphp.dev/
+# Note that they currently don't have a way to version lock PHP so be vigilant post-build
+FROM dunglas/frankenphp:main
+
+ENV LANG=C.UTF-8
+RUN useradd -m zing && mkdir /home/zing/logs /home/zing/dev && chown -R zing: /home/zing
+WORKDIR /home/zing/dev
 
 # Base dependencies; curl for Node, libs for PHP extension dependencies; git zip for Composer; xdebug for debugging
-RUN apt-get update && apt-get install -y curl libxslt1-dev libpq-dev git zip
-RUN pecl install xdebug
+RUN apt-get update && apt-get install -y neovim zsh curl libxslt1-dev libpq-dev git zip
+# TODO PHP 8.2 breaks PECL
+# RUN pecl install xdebug
 
 # Once we have curl; install LTS node and then install yarn through npm
 RUN curl -sL https://deb.nodesource.com/setup_lts.x | bash - && apt-get install -y nodejs
 RUN npm install --global yarn
 
-# Necessary PHP extensions, most notably Postgresql driver
-RUN docker-php-ext-enable xdebug
+# Necessary PHP extensions (at least for a small Symfony project), most notably Postgresql driver
+# TODO get FrankenPHP to support 8.1 for PECL
+#RUN docker-php-ext-enable xdebug
 RUN docker-php-ext-install xsl
 RUN docker-php-ext-install intl
 RUN docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
@@ -20,36 +28,25 @@ RUN docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
 RUN mv /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini
 
 # Copy xdebug settings and PHP.ini overrides into container's shared ini directory
-COPY ./conf/php-ini/xdebug.ini /usr/local/etc/php/conf.d/
-COPY ./conf/php-ini/php-ini-overrides.ini /usr/local/etc/php/conf.d/
+COPY ./.build/php-ini/xdebug.ini /usr/local/etc/php/conf.d/
+COPY ./.build/php-ini/php-ini-overrides.ini /usr/local/etc/php/conf.d/
 
 # Add Mailhog Sendmail Binary
-COPY ./conf/bin/mhsendmail_linux_amd64 /usr/local/bin/mhsendmail
+COPY ./.build/bin/mhsendmail_linux_amd64 /usr/local/bin/mhsendmail
 
 # Composer and symfony binaries
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 RUN curl -sS https://get.symfony.com/cli/installer | bash
 RUN mv /root/.symfony5/bin/symfony /usr/local/bin/symfony
 
-# Non-root project user
-RUN useradd -m zing
+# Switch user and include oh-my-zsh for better terminal experience
 USER zing
-WORKDIR /var/www/html/app
+RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
-# Ports used within container
-# nginx - http
-EXPOSE 80 
-# nginx - https (not configured with cert)
-EXPOSE 443 
-# postgres
-EXPOSE 5432 
-# php-fpm
-EXPOSE 9000 
-# xdebug
-EXPOSE 9003 
-# mailhog smtp
-EXPOSE 1025
-# mailhog web
-EXPOSE 8025
-# redis
-EXPOSE 6379
+# These are just for documentation. You're able to override these host ports
+# to whatever you want, but it is most streamlined if using 80 and 443
+EXPOSE 80
+EXPOSE 443
+
+# Default zsh instead of bash (although you can still use bash))
+CMD ['/usr/local/bin/zsh']
