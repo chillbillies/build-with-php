@@ -9,9 +9,9 @@ RUN useradd -m zing && \
 WORKDIR /home/zing/dev
 
 # Really only curl and git are necessary, the other two are just QoL
-# libxslt1-dev libpq-dev zip
+# Libnss3-tools for certutil
 RUN apt-get update && \
-    apt-get install -y neovim zsh curl git
+    apt-get install -y neovim zsh curl git libnss3-tools
 
 # Once we have curl; install LTS node and then install yarn through npm
 RUN curl -sL https://deb.nodesource.com/setup_lts.x | bash - && \
@@ -45,6 +45,3 @@ RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/inst
 # to whatever you want, but it is most streamlined if using 80 and 443
 EXPOSE 80
 EXPOSE 443
-
-# Default zsh instead of bash (although you can still use bash)
-CMD ['/usr/local/bin/zsh']
