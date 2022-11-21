@@ -18,7 +18,12 @@ services:
   php:
     hostname: php
     container_name: ${APP_NAME}
-    build: .
+    build:
+      context: .
+      args:
+        - APP_INIT=${APP_INIT}
+        - GIT_USER_NAME=${GIT_USER_NAME}
+        - GIT_USER_EMAIL=${GIT_USER_EMAIL}
     restart: always
     links:
       - database:postgres
@@ -41,12 +46,12 @@ services:
       - ${HOST_MAIL_SMTP_PORT}:1025
       - ${HOST_MAIL_WEB_PORT}:8025
 
-  cache:
+  redis:
     hostname: redis
-    container_name: ${APP_NAME}_cache
+    container_name: ${APP_NAME}_redis
     image: redis:7.0.5-alpine
     ports:
-      - ${HOST_CACHE_PORT}:6379
+      - ${HOST_REDIS_PORT}:6379
     volumes:
       - prplm_redis:/var/lib/redis/data
 volumes:

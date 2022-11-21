@@ -4,9 +4,7 @@ FROM dunglas/frankenphp:main
 
 ENV LANG=C.UTF-8
 RUN useradd -m zing && \
-    mkdir /home/zing/logs /home/zing/dev && \
-    chown -R zing: /home/zing
-WORKDIR /home/zing/dev
+    mkdir /home/zing/logs
 
 # Really only curl and git are necessary, the other two are just QoL
 # Libnss3-tools for certutil
@@ -36,6 +34,21 @@ COPY ./.build/bin/mhsendmail_linux_amd64 /usr/local/bin/mhsendmail
 # Adds Symfony CLI
 RUN curl -sS https://get.symfony.com/cli/installer | bash && \
     mv /root/.symfony5/bin/symfony /usr/local/bin/symfony
+
+# If APP_INIT env set to 'true', then create a new Symfony application,
+# else make the directory that an existing project will populate
+RUN if [ "$APP_INIT" = "true" ] ; then \
+       git config --global user.name "$GIT_USER_NAME" && \
+       git config --global user.email "$GIT_USER_EMAIL" && \
+       symfony new dev --webapp; \
+    else \
+       mkdir /home/zing/dev; \
+    fi
+
+# In either case, directories were made under root user,
+# so we chown them to be owned by zing user and the same work directory is set
+RUN chown -R zing: /home/zing
+WORKDIR /home/zing/dev
 
 # Switch user and include oh-my-zsh for better terminal experience
 USER zing
