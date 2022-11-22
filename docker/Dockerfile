@@ -2,6 +2,9 @@
 # Note that they currently don't have a way to version lock PHP so be vigilant post-build
 FROM dunglas/frankenphp:main
 
+ARG initProject=$APP_INIT
+ARG gitUser=$GIT_USER_NAME
+ARG gitEmail=$GIT_USER_EMAIL
 ENV LANG=C.UTF-8
 RUN useradd -m zing && \
     mkdir /home/zing/logs
@@ -31,19 +34,18 @@ COPY ./.build/php-ini/ /usr/local/etc/php/conf.d/
 # Copy Mailhog Sendmail Binary
 COPY ./.build/bin/mhsendmail_linux_amd64 /usr/local/bin/mhsendmail
 
+# Copy symfony-init script to enable initializing a new symfony project
+# See .env
+COPY .build/symfony-init.sh /home/zing/symfony-init.sh
+RUN chmod +x /home/zing/symfony-init.sh
+
 # Adds Symfony CLI
 RUN curl -sS https://get.symfony.com/cli/installer | bash && \
     mv /root/.symfony5/bin/symfony /usr/local/bin/symfony
 
-# If APP_INIT env set to 'true', then create a new Symfony application,
+# If APP_INIT env set to 'init', then create a new Symfony application,
 # else make the directory that an existing project will populate
-RUN if [ "$APP_INIT" = "true" ] ; then \
-       git config --global user.name "$GIT_USER_NAME" && \
-       git config --global user.email "$GIT_USER_EMAIL" && \
-       symfony new dev --webapp; \
-    else \
-       mkdir /home/zing/dev; \
-    fi
+RUN /home/zing/symfony-init.sh $initProject $gitUser $gitEmail
 
 # In either case, directories were made under root user,
 # so we chown them to be owned by zing user and the same work directory is set
