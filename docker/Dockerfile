@@ -2,17 +2,17 @@
 # Note that they currently don't have a way to version lock PHP so be vigilant post-build
 FROM dunglas/frankenphp:main
 
-ARG initProject=$APP_INIT
-ARG gitUser=$GIT_USER_NAME
-ARG gitEmail=$GIT_USER_EMAIL
+ARG APP_INIT
+ARG GIT_USER_NAME
+ARG GIT_USER_EMAIL
 ENV LANG=C.UTF-8
 RUN useradd -m zing && \
-    mkdir /home/zing/logs
+    mkdir /home/zing/logs && \
+    chown -R zing: /home/zing
 
-# Really only curl and git are necessary, the other two are just QoL
-# Libnss3-tools for certutil
+# Libnss3-tools for certutil (aka TLS support)
 RUN apt-get update && \
-    apt-get install -y neovim zsh curl git libnss3-tools
+    apt-get install -y vim-tiny curl git libnss3-tools
 
 # Once we have curl; install LTS node and then install yarn through npm
 RUN curl -sL https://deb.nodesource.com/setup_lts.x | bash - && \
@@ -20,7 +20,7 @@ RUN curl -sL https://deb.nodesource.com/setup_lts.x | bash - && \
 RUN npm install --global yarn
 
 # We use this script to install PHP extensions (and composer) seamlessly
-# Also dets default php.ini as the development version
+# Also sets default php.ini as the development version
 RUN curl -sSLf \
         -o /usr/local/bin/install-php-extensions \
         https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions && \
@@ -34,8 +34,7 @@ COPY ./.build/php-ini/ /usr/local/etc/php/conf.d/
 # Copy Mailhog Sendmail Binary
 COPY ./.build/bin/mhsendmail_linux_amd64 /usr/local/bin/mhsendmail
 
-# Copy symfony-init script to enable initializing a new symfony project
-# See .env
+# Copy symfony-init script to enable optional initialization of a new symfony project
 COPY .build/symfony-init.sh /home/zing/symfony-init.sh
 RUN chmod +x /home/zing/symfony-init.sh
 
@@ -43,18 +42,14 @@ RUN chmod +x /home/zing/symfony-init.sh
 RUN curl -sS https://get.symfony.com/cli/installer | bash && \
     mv /root/.symfony5/bin/symfony /usr/local/bin/symfony
 
+# Switch user
+USER zing
 # If APP_INIT env set to 'init', then create a new Symfony application,
 # else make the directory that an existing project will populate
-RUN /home/zing/symfony-init.sh $initProject $gitUser $gitEmail
+RUN /home/zing/symfony-init.sh $APP_INIT $GIT_USER_NAME $GIT_USER_EMAIL
 
-# In either case, directories were made under root user,
-# so we chown them to be owned by zing user and the same work directory is set
-RUN chown -R zing: /home/zing
+# In either case, this ends up being the work directory
 WORKDIR /home/zing/dev
-
-# Switch user and include oh-my-zsh for better terminal experience
-USER zing
-RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
 # These are just for documentation. You're able to override these host ports
 # to whatever you want, but it is most streamlined if using 80 and 443
