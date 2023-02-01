@@ -6,9 +6,9 @@ ARG APP_INIT
 ARG GIT_USER_NAME
 ARG GIT_USER_EMAIL
 ENV LANG=C.UTF-8
-RUN useradd -m zing && \
-    mkdir /home/zing/logs && \
-    chown -R zing: /home/zing
+RUN useradd -m chill && \
+    mkdir /home/chill/logs && \
+    chown -R chill: /home/chill
 
 # Libnss3-tools for certutil (aka TLS support)
 RUN apt-get update && \
@@ -35,21 +35,21 @@ COPY ./.build/php-ini/ /usr/local/etc/php/conf.d/
 COPY ./.build/bin/mhsendmail_linux_amd64 /usr/local/bin/mhsendmail
 
 # Copy symfony-init script to enable optional initialization of a new symfony project
-COPY .build/symfony-init.sh /home/zing/symfony-init.sh
-RUN chmod +x /home/zing/symfony-init.sh
+COPY .build/symfony-init.sh /home/chill/symfony-init.sh
+RUN chmod +x /home/chill/symfony-init.sh
 
 # Adds Symfony CLI
 RUN curl -sS https://get.symfony.com/cli/installer | bash && \
     mv /root/.symfony5/bin/symfony /usr/local/bin/symfony
 
 # Switch user
-USER zing
+USER chill
 # If APP_INIT env set to 'init', then create a new Symfony application,
 # else make the directory that an existing project will populate
-RUN /home/zing/symfony-init.sh $APP_INIT $GIT_USER_NAME $GIT_USER_EMAIL
+RUN /home/chill/symfony-init.sh $APP_INIT $GIT_USER_NAME $GIT_USER_EMAIL
 
 # In either case, this ends up being the work directory
-WORKDIR /home/zing/dev
+WORKDIR /home/chill/dev
 
 # These are just for documentation. You're able to override these host ports
 # to whatever you want, but it is most streamlined if using 80 and 443

@@ -1,16 +1,37 @@
-## Linux Nginx PostgreSQL PHP (LNPP) Stack
+# Chillbillies PHP Development Environment
+Heard PHP was a legacy language? Think again. This development environment is powered by the modern app server [FrankenPHP](https://frankenphp.dev) bundled with all the services needed to quickly get a [Symfony](https://symfony.com) project off the ground.
+This repo contains all the files necessary for setting up an entire development environment for building web applications with PHP. The goal is to take the arduous process of environment setup and boil it down to a simple, reproducible process by leveraging [Docker](https://www.docker.com/).
 
-This repo contains a Dockerfile that creates a custom Docker PHP 8.1 image that is built alongside the other services listed in `docker-compose.yaml` to create an LNPP stack. To use, copy the `docker` directory to a given project's directory and fill in the app name and host ports in `docker/.env`.
+The following tools have already been setup and are ready to rock:
+- PHP 8.2 with `composer`, `symfony`, LTS NodeJS and `yarn`
+- Two PostgreSQL v15 databases for development and testing
+- Redis
+- MailHog (local mail server)
+- git, curl and tiny-vim
+
+## Prerequisites
+- [Docker Desktop](https://www.docker.com/)
+
+## Get Started
+1. Fill in the app name in `docker/.env`, whether you want to "init" a new project or not, and optional host ports.
+
+Note that this environment can be used in conjunction with an existing project; however, FrankenPHP's minimum PHP version is 8.2 which won't be compatible with most projects.
 
 ### Environment build steps
 - While in this directory, run `docker compose build`
 - After the image builds run `docker compose up`
 
-### Env notes
-Devs can change the host ports in .env to allow flexibility in running other services outside of these Docker containers. Note that these containers are not set-up with Traefik so you may encounter issues if you set `HOST_APP_PORT` and `HOST_SECURE_APP_PORT` to 80 and 443 respectively.
+## Other Notes
+### Ports
+The default host ports applied in the committed `.env` are:
+- Application (http) on `3000` and https on `4000` (in other words, `localhost:3000` and `localhost:4000`)
+- `9025` for email
+- `44000` for the databases
+- `42000` for Redis.
+These can be changed in `docker/.env` to suite the needs of the developer.
 
-### Container notes
-The non-root user in the container is `zing` and the work directory is set as `/var/www/html/app`.
+### OS Context
+The default, non-root user in the container is `chill` and the work directory is their home directory. Entering the container with: `docker exec -it <YOUR_APP_CONTAINER_NAME_HERE>` will pop you into the shell as the `chill` user.
 
-### Database notes
-Two databases get created during the build step: `local_dev` and `local_test` which enables having separate databases between the dev and test environments. Credentials for those respective databases can be found in `docker/postgres/init/01-create-databases.sql`
+### Databases
+Two databases get created during the build step: `chill_dev` and `chill_test`. See `docker/.build/postgres/create-databases.sql` for respective credentials. The `POSTGRES_PASSWORD` in `.env` refers to the default `postgres` user in the database.

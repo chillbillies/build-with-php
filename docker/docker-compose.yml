@@ -28,8 +28,8 @@ services:
     links:
       - database:postgres
     volumes:
-      - ../:/home/zing/dev
-      - prplm_logs:/home/zing/logs
+      - ../:/home/chill/dev
+      - prplm_logs:/home/chill/logs
     depends_on:
       - database
     ports:
